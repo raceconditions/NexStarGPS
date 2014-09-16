@@ -1,0 +1,7 @@
+<resources>
+    <string name="title_activity_settings">Connection Settings</string>
+
+    <!-- Strings related to Settings -->
+    <string name="pref_host_display_name">Host</string>
+    <string name="pref_port_number_display_name">Port</string>
+</resources>

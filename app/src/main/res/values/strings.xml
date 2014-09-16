@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">TelescopeGPS</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="app_name">NexStar GPS</string>
     <string name="action_settings">Settings</string>
     <string name="latitude">Latitude</string>
     <string name="longitude">Longitude</string>
     <string name="current_date">Current Date</string>
     <string name="current_time">Current Time</string>
-    <string name="title_activity_gpslocation_sync">GPSLocationSync</string>
+    <string name="title_activity_gpslocation_sync">NexStar GPS</string>
+    <string name="title_activity_splash">NexStar GPS</string>
 
 </resources>
