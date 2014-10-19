@@ -24,9 +24,10 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     // You must install or update the Google Repository through the SDK manager to use this dependency.
     compile 'com.android.support:appcompat-v7:19.+'
     compile 'com.google.android.gms:play-services:4.4.52'
     compile 'com.android.support:support-v4:19.+'
+    compile project(':com.google.android.vendor.licensing')
 }
