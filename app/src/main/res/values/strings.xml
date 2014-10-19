@@ -9,5 +9,14 @@
     <string name="current_time">Current Time</string>
     <string name="title_activity_gpslocation_sync">NexStar GPS</string>
     <string name="title_activity_splash">NexStar GPS</string>
-
+    <string name="check_license">Check license</string>
+    <string name="checking_license">Checking license...</string>
+    <string name="dont_allow">Don\'t allow the user access</string>
+    <string name="allow">Allow the user access</string>
+    <string name="application_error">Application error: %1$s</string>
+    <!-- Unlicensed dialog messages -->
+    <string name="unlicensed_dialog_title">Application not licensed</string>
+    <string name="unlicensed_dialog_body">This application is not licensed. Please purchase it from Android Market.</string>
+    <string name="buy_button">Buy App</string>
+    <string name="quit_button">Exit</string>
 </resources>
