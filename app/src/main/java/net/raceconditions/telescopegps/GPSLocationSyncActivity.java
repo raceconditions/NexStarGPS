@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.Criteria;
@@ -18,11 +19,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.PolygonOptions;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -82,6 +85,9 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         createConnectButton();
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+            buildAlertMessageNoGps();
         criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, true);
         Location location = locationManager.getLastKnownLocation(provider);
@@ -91,7 +97,27 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         {
             mMap.setMyLocationEnabled(true);
             mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
+            zoomMap(location);
         }
+    }
+
+    private void buildAlertMessageNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
     }
 
     @Override
@@ -150,16 +176,24 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
 
         mTcpClient.sendMessage(dateTime);
         mTcpClient.sendMessage(gps);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                    Toast.makeText(context, "GPS coordinates and current time sent to telescope.", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void zoomMap(Location location) {
-        LatLng currentPosition =new LatLng(location.getLatitude(), location.getLongitude());
-        if(isFirstZoom) {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 16));
-            isFirstZoom = false;
+        if(location != null) {
+            LatLng currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
+            if (isFirstZoom) {
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 16));
+                isFirstZoom = false;
+            } else
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(currentPosition));
         }
-        else
-            mMap.animateCamera(CameraUpdateFactory.newLatLng(currentPosition));
     }
 
     private void createUpdateButton() {
@@ -174,7 +208,7 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
             public void onClick(View v) {
                 new AlertDialog.Builder(context)
                         .setTitle("Send GPS")
-                        .setMessage("Are you sure you want to send GPS coordinates to your telescope?")
+                        .setMessage("Are you sure you want to send GPS coordinates and current time to your telescope?")
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 sendGPSUpdate();
@@ -213,7 +247,7 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
                 public void run() {
                     if(mTcpClient != null) {
                         mTcpClient = null;
-                        Utils.alertOkDialog(context, "Telescope Disconnected", "The telescope connection is closed.");
+                        Toast.makeText(context, "The telescope connection is closed.", Toast.LENGTH_LONG).show();
                     }
                     createConnectButton();
                 }
@@ -234,7 +268,7 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Utils.alertOkDialog(context, "Telescope Connected", "The telescope is successfully connected.");
+                    Toast.makeText(context, "The telescope is successfully connected.", Toast.LENGTH_LONG).show();
                     createUpdateButton();
                 }
             });
