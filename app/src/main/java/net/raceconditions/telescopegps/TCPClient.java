@@ -16,13 +16,12 @@ import java.net.Socket;
 public class TCPClient implements TelescopeClient {
 
     private String serverMessage;
-    //public static final String SERVERIP = "192.168.1.12"; //your computer IP address
-    //public static final int SERVERPORT = 5000;
     private ConnectionEventHandler mMessageListener = null;
     private boolean mRun = false;
     private Context mContext;
     private String host = "0.0.0.0";
     private int port = 0;
+    AlertUtils alertUtils = new AlertUtils();
 
     OutputStream out;
     BufferedReader in;
@@ -36,12 +35,12 @@ public class TCPClient implements TelescopeClient {
         SharedPreferences sharedPrefs = PreferenceManager
                 .getDefaultSharedPreferences(context);
 
-        host = sharedPrefs.getString("host", "0.0.0.0");
+        host = sharedPrefs.getString("host", host);
         try {
-            port = Integer.valueOf(sharedPrefs.getString("port_number", "0"));
+            port = Integer.valueOf(sharedPrefs.getString("port_number", String.valueOf(port)));
         }
         catch (Exception ex){
-            Utils.alertOkDialog(mContext, "Settings Error", "Port number is invalid");
+            alertUtils.alertOkDialog(mContext, "Settings Error", "Port number is invalid");
         }
     }
 
@@ -66,45 +65,43 @@ public class TCPClient implements TelescopeClient {
         }
     }
 
+    /**
+     * Stops TCP client connection by breaking connection loop
+     */
     @Override
     public void stopClient() {
         mRun = false;
     }
 
+    /**
+     * Starts TCP client connection to telescope
+     */
     @Override
     public void startClient() {
 
         mRun = true;
 
         try {
-            //here you must put your computer's IP address.
             InetAddress serverAddr = InetAddress.getByName(host);
 
             Log.e("TCP Client", "C: Connecting...");
 
-            //create a socket to make the connection with the server
             Socket socket = new Socket(serverAddr, port);
 
             try {
 
-                //send the message to the server
                 out = socket.getOutputStream();
 
                 mMessageListener.connectionEstablished(this);
-
                 Log.e("TCP Client", "C: Sent.");
-
                 Log.e("TCP Client", "C: Done.");
 
-                //receive the message which the server sends back
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                //in this while the client listens for the messages sent by the server
                 while (mRun) {
                     serverMessage = in.readLine();
 
                     if (serverMessage != null && mMessageListener != null) {
-                        //call the method messageReceived from MyActivity class
                         mMessageListener.messageReceived(serverMessage);
                     }
                     serverMessage = null;
@@ -119,8 +116,6 @@ public class TCPClient implements TelescopeClient {
                 mMessageListener.connectionFailed();
 
             } finally {
-                //the socket must be closed. It is not possible to reconnect to this socket
-                // after it is closed, which means a new socket instance has to be created.
                 socket.close();
             }
 

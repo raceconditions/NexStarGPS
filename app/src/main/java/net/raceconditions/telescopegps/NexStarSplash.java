@@ -13,6 +13,11 @@ import android.view.WindowManager;
 
 public class NexStarSplash extends LicenseCheckActivity {
 
+    /**
+     * Creates a splash dialog during which a License check occurs
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

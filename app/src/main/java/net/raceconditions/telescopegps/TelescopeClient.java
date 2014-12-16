@@ -5,8 +5,6 @@ package net.raceconditions.telescopegps;
  */
 public interface TelescopeClient {
     void sendMessage(byte[] message);
-
     void stopClient();
-
     void startClient();
 }

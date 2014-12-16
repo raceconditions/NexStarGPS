@@ -11,8 +11,6 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.widget.TextView;
 import com.google.android.vending.licensing.*;
 
 
@@ -27,14 +25,10 @@ public class LicenseCheckActivity extends Activity{
 
     LicenseCheckerCallback mLicenseCheckerCallback;
     LicenseChecker mChecker;
-
     Handler mHandler;
-
     SharedPreferences prefs;
-
     NexStarSplash.LicenseCheckCallback licenseCheckCallback;
 
-    // REPLACE WITH YOUR OWN SALT , THIS IS FROM EXAMPLE
     private static final byte[] SALT = new byte[]{
             -14, -3, 66, 78, -10, 122, 29, 13, -73, -58, 1, -92, -62, 101, 35, -54, -21, -52, -115,
             65
@@ -66,20 +60,13 @@ public class LicenseCheckActivity extends Activity{
         Log.i("LICENSE", "checkLicense");
         mHandler = new Handler();
 
-        // Try to use more data here. ANDROID_ID is a single point of attack.
         String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        // Library calls this when it's done.
         mLicenseCheckerCallback = new MyLicenseCheckerCallback();
-        // Construct the LicenseChecker with a policy.
         mChecker = new LicenseChecker(
                 this, new ServerManagedPolicy(this,
                 new AESObfuscator(SALT, getPackageName(), deviceId)),
                 BASE64_PUBLIC_KEY);
-
-//        mChecker = new LicenseChecker(
-//                this, new StrictPolicy(),
-//                BASE64_PUBLIC_KEY);
 
         doCheck();
     }
@@ -92,7 +79,6 @@ public class LicenseCheckActivity extends Activity{
                 // Don't update UI if Activity is finishing.
                 return;
             }
-            // Should allow user access.
             displayResult(getString(R.string.allow));
             licensed = true;
             checkingLicense = false;
@@ -109,12 +95,6 @@ public class LicenseCheckActivity extends Activity{
             }
             displayResult(getString(R.string.dont_allow));
             licensed = false;
-            // Should not allow access. In most cases, the app should assume
-            // the user has access unless it encounters this. If it does,
-            // the app should inform the user of their unlicensed ways
-            // and then either shut down the app or limit the user to a
-            // restricted set of features.
-            // In this example, we show a dialog that takes the user to Market.
             checkingLicense = false;
             didCheck = true;
 
@@ -128,9 +108,6 @@ public class LicenseCheckActivity extends Activity{
                 return;
             }
             licensed = false;
-            // This is a polite way of saying the developer made a mistake
-            // while setting up or calling the license checker library.
-            // Please examine the error code and fix the error.
             String result = String.format(getString(R.string.application_error), errorCode);
             checkingLicense = false;
             didCheck = true;
@@ -175,7 +152,7 @@ public class LicenseCheckActivity extends Activity{
     protected void onDestroy() {
         super.onDestroy();
         if (mChecker != null) {
-            Log.i("License", "distroy checker");
+            Log.i("License", "destroy checker");
             mChecker.onDestroy();
         }
     }

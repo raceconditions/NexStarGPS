@@ -7,6 +7,12 @@ import java.util.concurrent.TimeUnit;
  * Created by ubuntu on 9/16/14.
  */
 public class DateSerializer {
+    /**
+     * Serialize a Calendar object to NexStar protocol dateTime
+     *
+     * @param calendar Calendar instance to serialize
+     * @return Byte array containing NexStar dateTime
+     */
     public static byte[] serialize(Calendar calendar) {
         int hours = calendar.get(Calendar.HOUR_OF_DAY);
         int minutes = calendar.get(Calendar.MINUTE);

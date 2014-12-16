@@ -13,6 +13,7 @@ public class TcpConnectTask extends AsyncTask<String,String,TCPClient> {
     private TaskEventHandler taskListener;
     private ConnectionEventHandler connectionListener;
     private Context context;
+    private AlertUtils alertUtils = new AlertUtils();
 
     public TcpConnectTask(TaskEventHandler listener, ConnectionEventHandler connectionListener, Context context) {
         this.taskListener = listener;
@@ -23,14 +24,13 @@ public class TcpConnectTask extends AsyncTask<String,String,TCPClient> {
     @Override
     protected TCPClient doInBackground(String... message) {
 
-        //we create a TCPClient object and
         TCPClient mTcpClient = new TCPClient(connectionListener, context);
 
         try {
             mTcpClient.startClient();
         } catch (Exception ex) {
             Log.e("TcpConnectTask", "Error", ex);
-            Utils.alertOkDialog(context, ex.toString(), ex.getMessage());
+            alertUtils.alertOkDialog(context, ex.toString(), ex.getMessage());
             return null;
         }
 

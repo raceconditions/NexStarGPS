@@ -10,6 +10,12 @@ public class LocationSerializer {
     private static final int MINUTES = 1;
     private static final int SECONDS = 2;
 
+    /**
+     * Serialize GPS location to NexStar degrees, minutes, seconds
+     *
+     * @param location Location instance to serialize
+     * @return Byte array containing NexStar dms
+     */
     public static byte[] serialize(Location location) {
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();

@@ -12,6 +12,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,10 +42,14 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
     private Context context = this;
     private String provider;
     private Boolean isFirstZoom = true;
+    private AlertUtils alertUtils = new AlertUtils();
     TCPClient mTcpClient;
     Button controlButton = null;
 
     private static final int RESULT_SETTINGS = 1;
+
+
+    //region Activity Overrides
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -65,7 +70,9 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
 
         return true;
     }
+    //endregion
 
+    //region FragmentActivity Overrides
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -85,47 +92,110 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         createConnectButton();
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-            buildAlertMessageNoGps();
         criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, true);
-        Location location = locationManager.getLastKnownLocation(provider);
-        locationManager.requestLocationUpdates(provider, 5000, 0, this);
 
-        if(mMap != null)
-        {
-            mMap.setMyLocationEnabled(true);
-            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
-            zoomMap(location);
-        }
+        setupLocation();
     }
 
-    private void buildAlertMessageNoGps() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-                        dialog.cancel();
-                    }
-                });
-        final AlertDialog alert = builder.create();
-        alert.show();
+    @Override
+    protected void onPause() {
+        super.onPause();
+        locationManager.removeUpdates(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
+        setupLocation();
+    }
+    //endregion
+
+    //region LocationListener Overrides
+    @Override
+    public void onLocationChanged(Location location) {
+        zoomMap(location);
     }
 
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+    @Override
+    public void onProviderEnabled(String provider) {}
+
+    @Override
+    public void onProviderDisabled(String provider) {}
+    //endregion
+
+    /**
+     * Configure location updates and update UI
+     */
+    private void setupLocation() {
+        try {
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                alertUtils.buildAlertMessageNoGps();
+            Location location = locationManager.getLastKnownLocation(provider);
+            locationManager.requestLocationUpdates(provider, 5000, 0, this);
+
+            if (mMap != null) {
+                mMap.setMyLocationEnabled(true);
+                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
+                zoomMap(location);
+            }
+        } catch(Exception ex) {
+            Log.e("GPSLocationSync", "Error Enabling Location", ex);
+            alertUtils.alertOkDialog(this.context, "Error Enabling Location", ex.getMessage());
+        }
+
+    }
+
+    /**
+     * Connect to telescope
+     */
+    private void startConnection() {
+
+        try {
+            new TcpConnectTask(new TaskListener(), new ConnectionListener(), this.context).execute("");
+        } catch (Exception ex) {
+            Log.e("GPSLocationSync", "Telescope Connection Error", ex);
+            alertUtils.alertOkDialog(this.context, "Telescope Connection Error", ex.getMessage());
+        }
+    }
+
+    /**
+     * Send the current dateTime and GPS location to telescope
+     */
+    private void sendGPSUpdate()
+    {
+        try {
+            Calendar calendar = Calendar.getInstance();
+            calendar.getTime();
+            byte[] dateTime = DateSerializer.serialize(calendar);
+
+            Location location = locationManager.getLastKnownLocation(provider);
+            byte[] gps = LocationSerializer.serialize(location);
+
+            mTcpClient.sendMessage(dateTime);
+            mTcpClient.sendMessage(gps);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i("GPSLocationSync", "GPS coordinates sent");
+                    Toast.makeText(context, "GPS coordinates and current time sent to telescope.", Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception ex) {
+            Log.e("GPSLocationSync", "GPS Update Error", ex);
+            alertUtils.alertOkDialog(this.context, "GPS Update Error", ex.getMessage());
+        }
+    }
+
+    /**
+     * Get a map instance from maps fragment manager
+     */
     private void setUpMapIfNeeded() {
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
@@ -135,56 +205,11 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         }
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        zoomMap(location);
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
-    private void startConnection() {
-
-        try {
-            new TcpConnectTask(new TaskListener(), new ConnectionListener(), this.context).execute("");
-        } catch (Exception ex)
-        {
-            Utils.alertOkDialog(this.context, ex.toString(), ex.getMessage());
-        }
-    }
-
-    private void sendGPSUpdate()
-    {
-        Calendar calendar = Calendar.getInstance();
-        calendar.getTime();
-        byte[] dateTime = DateSerializer.serialize(calendar);
-
-        Location location = locationManager.getLastKnownLocation(provider);
-        byte[] gps = LocationSerializer.serialize(location);
-
-        mTcpClient.sendMessage(dateTime);
-        mTcpClient.sendMessage(gps);
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                    Toast.makeText(context, "GPS coordinates and current time sent to telescope.", Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
+    /**
+     * Center and zoom map, unless user has zoomed, then just center
+     *
+     * @param location Location to center and zoom to
+     */
     private void zoomMap(Location location) {
         if(location != null) {
             LatLng currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
@@ -196,6 +221,9 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         }
     }
 
+    /**
+     * Present a button to the user for sending GPS updates to telescope
+     */
     private void createUpdateButton() {
         if(controlButton == null) {
             controlButton = new Button(this);
@@ -225,6 +253,9 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         });
     }
 
+    /**
+     * Present a button to the user for creating a connection to telescope
+     */
     private void createConnectButton() {
         if (controlButton == null) {
             controlButton = new Button(this);
@@ -240,13 +271,17 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         });
     }
 
-    public class TaskListener implements TaskEventHandler {
+    /**
+     * Async cleanup/alert UI when closing TCP connection to telescope
+     */
+    private class TaskListener implements TaskEventHandler {
         public void onTaskCompleted(TCPClient c) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if(mTcpClient != null) {
                         mTcpClient = null;
+                        Log.e("GPSLocationSync", "Closed Connection");
                         Toast.makeText(context, "The telescope connection is closed.", Toast.LENGTH_LONG).show();
                     }
                     createConnectButton();
@@ -255,32 +290,35 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         }
     }
 
-    public class ConnectionListener implements ConnectionEventHandler {
+    /**
+     * Async handle connection event/failure for TCP connection to telescope
+     */
+    private class ConnectionListener implements ConnectionEventHandler {
         @Override
-        //here the messageReceived method is implemented
         public void messageReceived(String message) {
+            //do nothing with messages
         }
 
         @Override
-        //here the messageReceived method is implemented
         public void connectionEstablished(TCPClient tcpClient) {
             mTcpClient = tcpClient;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     Toast.makeText(context, "The telescope is successfully connected.", Toast.LENGTH_LONG).show();
+                    Log.i("GPSLocationSync", "Telescope connected");
                     createUpdateButton();
                 }
             });
         }
 
         @Override
-        //here the messageReceived method is implemented
         public void connectionFailed() {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Utils.alertOkDialog(context, "Connection Failed", "Unable to connect to the telescope. Please check your connection and settings.");
+                    Log.e("GPSLocationSync", "Telescope Connection Failed");
+                    alertUtils.alertOkDialog(context, "Connection Failed", "Unable to connect to the telescope. Please check your connection and settings.");
                 }
             });
         }
