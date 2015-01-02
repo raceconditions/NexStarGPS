@@ -9,7 +9,7 @@
     android:layout_height="match_parent"
     android:id="@+id/map"
     tools:context="net.raceconditions.telescopegps.GPSLocationSyncActivity"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
+    android:name="net.raceconditions.telescopegps.TouchSupportMapFragment"
     tools:layout="@layout/activity_gpslocation_sync" />
 
  </LinearLayout>

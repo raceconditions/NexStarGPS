@@ -4,19 +4,16 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.Criteria;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -26,22 +23,17 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.PolygonOptions;
 
 import java.util.Calendar;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
-import javax.xml.transform.Result;
-
-public class GPSLocationSyncActivity extends FragmentActivity implements LocationListener {
+public class GPSLocationSyncActivity extends FragmentActivity implements LocationListener, TouchableWrapper.UpdateMapAfterUserInterection {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private LocationManager locationManager;
     private Criteria criteria;
     private Context context = this;
     private String provider;
-    private Boolean isFirstZoom = true;
+    private Boolean userHasInteracted = false;
     private AlertUtils alertUtils = new AlertUtils();
     TCPClient mTcpClient;
     Button controlButton = null;
@@ -102,6 +94,7 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
     protected void onPause() {
         super.onPause();
         locationManager.removeUpdates(this);
+        userHasInteracted = false;
     }
 
     @Override
@@ -213,9 +206,8 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
     private void zoomMap(Location location) {
         if(location != null) {
             LatLng currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
-            if (isFirstZoom) {
+            if (!userHasInteracted) {
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 16));
-                isFirstZoom = false;
             } else
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(currentPosition));
         }
@@ -322,5 +314,10 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
                 }
             });
         }
+    }
+
+    // Implement the interface method
+    public void onUpdateMapAfterUserInterection() {
+        userHasInteracted = true;
     }
 }
