@@ -11,7 +11,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 
-public class NexStarSplash extends LicenseCheckActivity {
+public class NexStarSplash extends Activity {
 
     /**
      * Creates a splash dialog during which a License check occurs
@@ -26,24 +26,15 @@ public class NexStarSplash extends LicenseCheckActivity {
 
         setContentView(R.layout.activity_splash);
 
-        checkLicense(new LicenseCheckCallback() {
+        int myTimer = 2000;
+        new Handler().postDelayed(new Runnable() {
+
             @Override
-            public void onLicenseAccepted() {
-                int myTimer = 2000;
-                new Handler().postDelayed(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Intent i = new Intent(NexStarSplash.this, GPSLocationSyncActivity.class);
-                        startActivity(i);
-                        finish(); // close this activity
-                    }
-                }, myTimer);
+            public void run() {
+                Intent i = new Intent(NexStarSplash.this, GPSLocationSyncActivity.class);
+                startActivity(i);
+                finish(); // close this activity
             }
-        });
-    }
-
-    interface LicenseCheckCallback {
-        void onLicenseAccepted();
+        }, myTimer);
     }
 }
