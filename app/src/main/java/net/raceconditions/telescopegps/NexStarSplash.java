@@ -28,7 +28,6 @@ public class NexStarSplash extends Activity {
 
         int myTimer = 2000;
         new Handler().postDelayed(new Runnable() {
-
             @Override
             public void run() {
                 Intent i = new Intent(NexStarSplash.this, GPSLocationSyncActivity.class);
