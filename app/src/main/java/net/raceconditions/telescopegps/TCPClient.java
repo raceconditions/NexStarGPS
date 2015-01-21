@@ -89,7 +89,6 @@ public class TCPClient implements TelescopeClient {
             Log.e("TCP Client", "C: Connecting...");
 
             Socket socket = new Socket();
-            socket.setSoTimeout(timeout);
             socket.connect(new InetSocketAddress(serverAddr, port), timeout);
 
             try {

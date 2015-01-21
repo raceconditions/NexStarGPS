@@ -158,7 +158,7 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(context, "Connecting to telescope...", Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Connecting to telescope...", Toast.LENGTH_SHORT).show();
             }
         });
         try {
@@ -249,21 +249,7 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
 
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(context)
-                        .setTitle("Send GPS")
-                        .setMessage("Are you sure you want to send GPS coordinates and current time to your telescope?")
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                sendGPSUpdate();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                // do nothing
-                            }
-                        })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
+                sendGPSUpdate();
             }
         });
     }
@@ -317,7 +303,6 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         @Override
         public void connectionEstablished(TCPClient tcpClient) {
             mTcpClient = tcpClient;
-            createUpdateButton();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
