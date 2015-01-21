@@ -140,9 +140,13 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
 
                 zoomMap(location);
             }
-        } catch(Exception ex) {
+        } catch(final Exception ex) {
             Log.e("GPSLocationSync", "Error Enabling Location", ex);
-            alertUtils.alertOkDialog(this.context, "Error Enabling Location", ex.getMessage());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    alertUtils.alertOkDialog(context, "Error Enabling Location", ex.getMessage());
+            }});
         }
 
     }
@@ -151,12 +155,23 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
      * Connect to telescope
      */
     private void startConnection() {
-
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(context, "Connecting to telescope...", Toast.LENGTH_LONG).show();
+            }
+        });
         try {
             new TcpConnectTask(new TaskListener(), new ConnectionListener(), this.context).execute("");
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             Log.e("GPSLocationSync", "Telescope Connection Error", ex);
-            alertUtils.alertOkDialog(this.context, "Telescope Connection Error", ex.getMessage());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    alertUtils.alertOkDialog(context, "Telescope Connection Error", ex.getMessage());
+                }
+            });
+
         }
     }
 
@@ -183,9 +198,14 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
                     Toast.makeText(context, "GPS coordinates and current time sent to telescope.", Toast.LENGTH_LONG).show();
                 }
             });
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             Log.e("GPSLocationSync", "GPS Update Error", ex);
-            alertUtils.alertOkDialog(this.context, "GPS Update Error", ex.getMessage());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    alertUtils.alertOkDialog(context, "GPS Update Error", ex.getMessage());
+                }
+            });
         }
     }
 
@@ -297,22 +317,23 @@ public class GPSLocationSyncActivity extends FragmentActivity implements Locatio
         @Override
         public void connectionEstablished(TCPClient tcpClient) {
             mTcpClient = tcpClient;
+            createUpdateButton();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     Toast.makeText(context, "The telescope is successfully connected.", Toast.LENGTH_LONG).show();
-                    Log.i("GPSLocationSync", "Telescope connected");
                     createUpdateButton();
                 }
             });
+            Log.i("GPSLocationSync", "Telescope connected");
         }
 
         @Override
         public void connectionFailed() {
+            Log.e("GPSLocationSync", "Telescope Connection Failed");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Log.e("GPSLocationSync", "Telescope Connection Failed");
                     alertUtils.alertOkDialog(context, "Connection Failed", "Unable to connect to the telescope. Please check your connection and settings.");
                 }
             });

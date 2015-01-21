@@ -11,7 +11,9 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import java.io.*;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 public class TCPClient implements TelescopeClient {
 
@@ -21,7 +23,7 @@ public class TCPClient implements TelescopeClient {
     private Context mContext;
     private String host = "0.0.0.0";
     private int port = 0;
-    AlertUtils alertUtils = new AlertUtils();
+    private int timeout = 5000;
 
     OutputStream out;
     BufferedReader in;
@@ -40,7 +42,7 @@ public class TCPClient implements TelescopeClient {
             port = Integer.valueOf(sharedPrefs.getString("port_number", String.valueOf(port)));
         }
         catch (Exception ex){
-            alertUtils.alertOkDialog(mContext, "Settings Error", "Port number is invalid");
+            listener.connectionFailed();
         }
     }
 
@@ -86,10 +88,11 @@ public class TCPClient implements TelescopeClient {
 
             Log.e("TCP Client", "C: Connecting...");
 
-            Socket socket = new Socket(serverAddr, port);
+            Socket socket = new Socket();
+            socket.setSoTimeout(timeout);
+            socket.connect(new InetSocketAddress(serverAddr, port), timeout);
 
             try {
-
                 out = socket.getOutputStream();
 
                 mMessageListener.connectionEstablished(this);
